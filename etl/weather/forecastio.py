@@ -8,7 +8,7 @@ import urlfetch
 class ForecastIOImport(object):
     """API to interface with forecast.io and get data into HDFS."""
 
-    def __init__(self, secrets, root_dir):
+    def __init__(self, secrets, data_dir):
         self.token = secrets.ForecastIOToken
 
         self.locations = [
@@ -19,7 +19,7 @@ class ForecastIOImport(object):
             ['San_Jose', 37.33641, -121.8916]
         ]
 
-        self.root_dir = root_dir
+        self.data_dir = data_dir
 
     def do_import(self, start_date, end_date, max_requests):
         """Import historical weather data from forecast.io.
@@ -30,13 +30,13 @@ class ForecastIOImport(object):
         Importing stops when the entire date range has been covered or the
         given number of requests has been used up.
 
-        Data is written to the root directory passed to the constructor under
+        Data is written to the data directory passed to the constructor under
         a subdirectory named by the specific date, as follows:
 
-          ROOT_DIR/YYYY-MM-DD/weather_LOCATION.json
+          DATA_DIR/YYYY-MM-DD/weather_LOCATION.json
         """
         try:
-            os.mkdir("./%s" % self.root_dir)
+            os.mkdir("./%s" % self.data_dir)
         except OSError:
             pass
 
@@ -44,7 +44,7 @@ class ForecastIOImport(object):
         num_requests = 0
         while current_date <= end_date:
             dir_name = "%s/%s" % (
-            self.root_dir, current_date.strftime("%Y-%m-%d"))
+            self.data_dir, current_date.strftime("%Y-%m-%d"))
 
             locations_to_fetch = []
             for name, lat, lng in self.locations:
@@ -67,7 +67,7 @@ class ForecastIOImport(object):
             print "Requesting weather data for %s..." % current_date
 
             try:
-                os.mkdir("./%s" % dir_name)
+                os.mkdir(dir_name)
             except OSError:
                 pass
 
@@ -99,7 +99,7 @@ class ForecastIOImport(object):
         # Copy all subdirectories we've written to above into HDFS
         subprocess.call(
             "/vagrant/hadoop/hadoop-hdfs.sh "
-            "dfs -put %s/20* hdfs://hadoop:9000/weather/" % self.root_dir,
+            "dfs -put %s/20* hdfs://hadoop:9000/weather/" % self.data_dir,
             shell=True
         )
 
