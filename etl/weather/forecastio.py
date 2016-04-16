@@ -43,8 +43,8 @@ class ForecastIOImport(object):
         current_date = start_date
         num_requests = 0
         while current_date <= end_date:
-            dir_name = "%s/%s" % (
-            self.data_dir, current_date.strftime("%Y-%m-%d"))
+            date_str = current_date.strftime("%Y-%m-%d")
+            dir_name = "%s/%s" % (self.data_dir, date_str)
 
             locations_to_fetch = []
             for name, lat, lng in self.locations:
@@ -75,7 +75,7 @@ class ForecastIOImport(object):
                 print "Getting location %s..." % name
                 url = (
                     "https://api.forecast.io/forecast/%s/%s,%s,%sT00:00:00" % (
-                        self.token, lat, lng, dir_name))
+                        self.token, lat, lng, date_str))
                 filename = "%s/weather_%s.json" % (dir_name, name)
                 data = urlfetch.get(url).content
                 with open(filename, "w") as f:
