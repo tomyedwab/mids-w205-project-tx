@@ -30,13 +30,24 @@ class BikeshareImport(object):
         subprocess.call('cat %s/bikeshare_raw/status_data_1.csv %s/bikeshare_raw/status_data_2.csv %s/bikeshare_raw/status_data_3.csv > %s/bikeshare_raw/status_data.csv' % (self.DATA_DIR, self.DATA_DIR, self.DATA_DIR, self.DATA_DIR), shell=True)
 
         # create directories in HDFS (TODO test on Docker machine)
-        subprocess.call('/vagrant/hadoop/hadoop-hdfs.sh', shell=True)
-        subprocess.call('dfs -mkdir hdfs://hadoop:9000/station_data', shell=True)
-        subprocess.call('dfs -mkdir hdfs://hadoop:9000/status_data', shell=True)
+        subprocess.call(
+            '/vagrant/hadoop/hadoop-hdfs.sh '
+            'dfs -mkdir hdfs://hadoop:9000/station_data',
+            shell=True)
+        subprocess.call(
+            '/vagrant/hadoop/hadoop-hdfs.sh '
+            'dfs -mkdir hdfs://hadoop:9000/status_data',
+            shell=True)
 
         # copy processed station and status data to directories in HDFS (TODO test on Docker machine)
-        subprocess.call('dfs -put %s/bikeshare_raw/station_data.csv hdfs://hadoop:9000/station_data' % self.DATA_DIR, shell=True)
-        subprocess.call('dfs -put %s/bikeshare_raw/status_data.csv hdfs://hadoop:9000/status_data' % self.DATA_DIR], shell=True)
+        subprocess.call(
+            '/vagrant/hadoop/hadoop-hdfs.sh '
+            'dfs -put %s/bikeshare_raw/station_data.csv hdfs://hadoop:9000/station_data' % self.DATA_DIR,
+            shell=True)
+        subprocess.call(
+            '/vagrant/hadoop/hadoop-hdfs.sh '
+            'dfs -put %s/bikeshare_raw/status_data.csv hdfs://hadoop:9000/status_data' % self.DATA_DIR,
+            shell=True)
 
 if __name__ == '__main__':
 
