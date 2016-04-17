@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision :shell, :path => "install-docker.sh"
 
   config.vm.provider "virtualbox" do |v|
-    v.memory = 2048
+    v.memory = 4096
     v.cpus = 2
   end
 
