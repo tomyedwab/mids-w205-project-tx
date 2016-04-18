@@ -9,7 +9,7 @@ class BikeshareImport(object):
     def __init__(self, DATA_DIR):
         self.DATA_DIR = DATA_DIR
 
-    def do_import(self):  # TODO: working locally, test on Docker machine
+    def do_import(self):
         """Concatenate the raw BikeShare data and transform.
 
         The concatenated CSVs are written to to HDFS and then transformed in
@@ -35,7 +35,7 @@ class BikeshareImport(object):
         subprocess.call('tail -n +2 %s/bikeshare_raw/201508_status_data.csv > %s/bikeshare_raw/status_data_3.csv' % (self.DATA_DIR, self.DATA_DIR), shell=True)
         subprocess.call('cat %s/bikeshare_raw/status_data_1.csv %s/bikeshare_raw/status_data_2.csv %s/bikeshare_raw/status_data_3.csv > %s/bikeshare_raw/status_data.csv' % (self.DATA_DIR, self.DATA_DIR, self.DATA_DIR, self.DATA_DIR), shell=True)
 
-        # create directories in HDFS (TODO test on Docker machine)
+        # create directories in HDFS
         subprocess.call(
             '/vagrant/hadoop/hadoop-hdfs.sh '
             'dfs -mkdir hdfs://hadoop:9000/station_data',
@@ -45,7 +45,7 @@ class BikeshareImport(object):
             'dfs -mkdir hdfs://hadoop:9000/status_data',
             shell=True)
 
-        # copy processed station and status data to directories in HDFS (TODO test on Docker machine)
+        # copy processed station and status data to directories in HDFS
         subprocess.call(
             '/vagrant/hadoop/hadoop-hdfs.sh '
             'dfs -put %s/bikeshare_raw/station_data.csv hdfs://hadoop:9000/station_data' % self.DATA_DIR,
