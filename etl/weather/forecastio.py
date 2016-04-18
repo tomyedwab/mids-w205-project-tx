@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import datetime
+import json
 import os
 import subprocess
 import urlfetch
@@ -88,19 +89,68 @@ class ForecastIOImport(object):
 
     def copy_to_hdfs(self):
         """Copy weather data imported in `do_import` to HDFS."""
-        print "Copying all files to HDFS... (May take a while)"
 
-        # Make the directory if it doesn't already exist
+        print "Converting weather data to CSV..."
+
+        subprocess.call(
+            "rm -rf /vagrant/tmp && mkdir /vagrant/tmp",
+            shell=True)
+
+        with open("/vagrant/tmp/weather.csv", "w") as out:
+            for root, dir, files in os.walk(self.data_dir):
+                for file in files:
+                    if file.startswith("weather_"):
+                        date = root[len(self.data_dir)+1:len(self.data_dir)+11]
+                        city = file[8:-5]
+
+                        with open("%s/%s" % (root, file)) as f:
+                            data = json.load(f)
+
+                        if not data:
+                            print "ERROR in %s/%s" % (root, file)
+                            continue
+
+                        if ('hourly' not in data or data['hourly'] is None or
+                            'data' not in data['hourly']):
+                            print "ERROR in %s/%s" % (root, file)
+                            print data
+                            continue
+
+                        for entry in data['hourly']['data']:
+                            row = [
+                                date,
+                                city,
+                                data['latitude'],
+                                data['longitude'],
+                                datetime.datetime
+                                    .fromtimestamp(entry['time'])
+                                    .strftime("%H:%M"),
+                                entry['summary'],
+                                entry.get('precipIntensity', ''),
+                                entry.get('precipProbability', ''),
+                                entry.get('temperature', ''),
+                                entry.get('apparentTemperature', ''),
+                                entry.get('humidity', ''),
+                                entry.get('windSpeed', ''),
+                                entry.get('visibility', ''),
+                                entry.get('pressure', ''),
+                            ]
+                            out.write(",".join([str(x) for x in row]) + "\n")
+
+        print "Copying file to HDFS... (May take a while)"
+
+        # Copy the CSV into HDFS
         subprocess.call(
             "/vagrant/hadoop/hadoop-hdfs.sh "
-            "dfs -mkdir -p hdfs://hadoop:9000/weather",
+            "dfs -rm hdfs://hadoop:9000/weather.csv",
             shell=True
         )
-        # Copy all subdirectories we've written to above into HDFS
         subprocess.call(
             "/vagrant/hadoop/hadoop-hdfs.sh "
-            "dfs -put %s/20* hdfs://hadoop:9000/weather/" % self.data_dir,
+            "dfs -put /vagrant/tmp/weather.csv hdfs://hadoop:9000/",
             shell=True
         )
+
+        subprocess.call("rm -rf /vagrant/tmp", shell=True)
 
         print "Done."
