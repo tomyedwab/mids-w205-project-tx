@@ -10,6 +10,12 @@ class BikeshareImport(object):
         self.DATA_DIR = DATA_DIR
 
     def do_import(self):  # TODO: working locally, test on Docker machine
+        """Concatenate the raw BikeShare data and transform.
+
+        The concatenated CSVs are written to to HDFS and then transformed in
+        Spark. The output is then put into the /station_data_schema and
+        /status_data_schema directories in Parquet format.
+        """
 
         # print "Downloading and unzipping bikeshare data..." # TODO: not functional currently - all individual csv files must already be in /data/bikeshare_raw before script execution
         # subprocess.call('wget %s -O temp.zip; unzip temp.zip -d %s/bikeshare_raw; rm temp.zip' % (year_1_data, self.DATA_DIR))
@@ -48,6 +54,15 @@ class BikeshareImport(object):
             '/vagrant/hadoop/hadoop-hdfs.sh '
             'dfs -put %s/bikeshare_raw/status_data.csv hdfs://hadoop:9000/status_data' % self.DATA_DIR,
             shell=True)
+
+        print "Running transform in Spark..."
+
+        # Run transform in Spark
+        subprocess.call(
+            '/vagrant/spark/run-pyspark-cmd.sh '
+            '/vagrant/etl/spark-bikeshare-transform.py',
+            shell=True
+        )
 
 if __name__ == '__main__':
 

@@ -88,7 +88,11 @@ class ForecastIOImport(object):
         print "Stopped requests at %s" % current_date
 
     def copy_to_hdfs(self):
-        """Copy weather data imported in `do_import` to HDFS."""
+        """Convert weather data imported in `do_import` to CSV and transform.
+
+        The CSV is written to to HDFS and then transformed in Spark. The output
+        is then put into the /weather_data_schema directory in Parquet format.
+        """
 
         print "Converting weather data to CSV..."
 
@@ -137,7 +141,7 @@ class ForecastIOImport(object):
                             ]
                             out.write(",".join([str(x) for x in row]) + "\n")
 
-        print "Copying file to HDFS... (May take a while)"
+        print "Copying file to HDFS..."
 
         # Copy the CSV into HDFS
         subprocess.call(
@@ -152,5 +156,14 @@ class ForecastIOImport(object):
         )
 
         subprocess.call("rm -rf /vagrant/tmp", shell=True)
+
+        print "Running transform in Spark... (This can take a looong time.)"
+
+        # Run transform in Spark
+        subprocess.call(
+            '/vagrant/spark/run-pyspark-cmd.sh '
+            '/vagrant/etl/spark-weather-transform.py',
+            shell=True
+        )
 
         print "Done."

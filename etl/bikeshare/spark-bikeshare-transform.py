@@ -30,7 +30,7 @@ schema = StructType([
 station_df = sqlContext.createDataFrame(station_csv, schema)
 print "#######"
 print station_df.printSchema()
-print station_df.show()
+station_df.show()
 print "#######"
 
 status_csv = (sc.textFile("hdfs://hadoop:9000/status_data")
@@ -56,6 +56,18 @@ schema = StructType([
 status_df = sqlContext.createDataFrame(status_csv, schema)
 print "#######"
 print status_df.printSchema()
-print status_df.show()
-print status_df.filter("bikesAvailable = 0").show()
+status_df.show()
 print "#######"
+
+# Filter just the status entries that correspond to the first minute of an hour
+def on_the_hour(time):
+    return time.endswith(":00")
+
+status_df_filtered = status_df.filter(F.udf(on_the_hour, BooleanType())(F.col("time")))
+status_df_filtered.show()
+
+# Save the new dataframes with schemas
+station_df.write.save(
+    "hdfs://hadoop:9000/station_data_schema", mode="overwrite")
+status_df_filtered.write.save(
+    "hdfs://hadoop:9000/status_data_schema", mode="overwrite")

@@ -49,3 +49,7 @@ weather_agg = weather_df.groupBy("date", "city").agg(
     F.min(weather_df.temperature), F.max(weather_df.temperature),
     F.min(weather_df.pressure), F.max(weather_df.pressure))
 weather_agg.show()
+
+# Save the new dataframes with schemas
+weather_df.write.save(
+    "hdfs://hadoop:9000/weather_data_schema", mode="overwrite")
