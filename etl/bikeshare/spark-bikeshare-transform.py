@@ -8,12 +8,14 @@ from pyspark.sql import functions as F
 sc = SparkContext("local", "Bike Share ETL", pyFiles=[])
 sqlContext = SQLContext(sc)
 
+# Parse CSV and convert relevant fields to float
+# Transform spaces in city names to underscores
 station_csv = (sc.textFile("hdfs://hadoop:9000/station_data")
     .map(lambda line: line.split(","))
     .filter(lambda line: len(line)>1)
     .map(lambda line: (
         int(line[0]), line[1], float(line[2]), float(line[3]),
-        int(line[4]), line[5], line[6]
+        int(line[4]), line[5].replace(" ", "_"), line[6]
     )))
 
 schema = StructType([

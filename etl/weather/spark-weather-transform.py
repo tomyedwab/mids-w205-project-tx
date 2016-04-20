@@ -11,12 +11,21 @@ sqlContext = SQLContext(sc)
 weather_csv = (sc.textFile("hdfs://hadoop:9000/weather.csv")
     .map(lambda line: line.split(","))
     .filter(lambda line: len(line)>1)
+    .filter(lambda line: line[2] != "")
+    .filter(lambda line: line[3] != "")
+    .filter(lambda line: line[6] != "")
+    .filter(lambda line: line[7] != "")
+    .filter(lambda line: line[8] != "")
+    .filter(lambda line: line[9] != "")
+    .filter(lambda line: line[10] != "")
+    .filter(lambda line: line[11] != "")
+    .filter(lambda line: line[12] != "")
+    .filter(lambda line: line[13] != "")
     .map(lambda line: (
-        line[0], line[1], float(line[2] or "NaN"), float(line[3] or "NaN"),
-        line[4], line[5], float(line[6] or "NaN"), float(line[7] or "NaN"),
-        float(line[8] or "NaN"), float(line[9] or "NaN"),
-        float(line[10] or "NaN"), float(line[11] or "NaN"),
-        float(line[12] or "NaN"), float(line[13] or "NaN")
+        line[0], line[1], float(line[2]), float(line[3]),
+        line[4], line[5], float(line[6]), float(line[7]),
+        float(line[8]), float(line[9]), float(line[10]), float(line[11]),
+        float(line[12]), float(line[13])
     )))
 
 fields = [

@@ -3,7 +3,10 @@ FROM ubuntu:latest
 RUN echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
 RUN echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
 RUN apt-get update && apt-get install -y software-properties-common
-RUN apt-add-repository ppa:webupd8team/java && apt-get update && apt-get install -y oracle-java7-installer libslf4j-java liblog4j1.2-java libprotobuf-java python
+RUN apt-add-repository ppa:webupd8team/java && apt-get update && apt-get install -y oracle-java7-installer libslf4j-java liblog4j1.2-java libprotobuf-java python python-pip python-dev
+
+RUN pip install numpy
+RUN pip install pandas
 
 ADD spark-1.6.1-bin-hadoop2.6.tgz /etc
 RUN ln -s /etc/spark-1.6.1-bin-hadoop2.6/ /etc/spark
