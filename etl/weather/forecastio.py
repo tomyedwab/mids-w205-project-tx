@@ -38,7 +38,7 @@ class ForecastIOImport(object):
           DATA_DIR/YYYY-MM-DD/weather_LOCATION.json
         """
         try:
-            os.mkdir("./%s" % self.data_dir)
+            os.mkdir("%s" % self.data_dir)
         except OSError:
             pass
 
@@ -162,3 +162,53 @@ class ForecastIOImport(object):
         )
 
         print "Done."
+
+    def get_current_weather(self):
+        dataset_name = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+
+        weather_data = []
+        for name, lat, lng in self.locations:
+            print "Getting location %s..." % name
+            url = (
+                "https://api.forecast.io/forecast/%s/%s,%s" % (
+                    self.token, lat, lng))
+            data = json.loads(urlfetch.get(url).content)
+            for entry in data['hourly']['data']:
+                row = [
+                    name,
+                    datetime.datetime
+                        .fromtimestamp(entry['time'])
+                        .strftime("%Y-%m-%d"),
+                    datetime.datetime
+                        .fromtimestamp(entry['time'])
+                        .strftime("%H:%M"),
+                    entry.get('temperature', ''),
+                    entry.get('humidity', ''),
+                    entry.get('visibility', ''),
+                    entry.get('pressure', ''),
+                    entry.get('precipIntensity', ''),
+                    entry.get('windSpeed', ''),
+                ]
+                weather_data.append(row)
+
+        print "Loading %s.csv into HDFS..." % dataset_name
+
+        with open("/tmp/%s.csv" % dataset_name, "w") as f:
+            for row in weather_data:
+                f.write(",".join([str(e) for e in row]) + "\n")
+
+        subprocess.call(
+            "%s/hadoop/hadoop-hdfs.sh "
+            "dfs -mkdir hdfs://hadoop:9000/current_weather" % (
+                self.root_dir),
+            shell=True
+        )
+
+        subprocess.call(
+            "%s/hadoop/hadoop-hdfs.sh "
+            "dfs -put /tmp/%s.csv hdfs://hadoop:9000/current_weather/" % (
+                self.root_dir, dataset_name),
+            shell=True
+        )
+
+        return dataset_name
