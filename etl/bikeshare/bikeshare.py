@@ -6,7 +6,8 @@ import subprocess
 
 class BikeshareImport(object):
 
-    def __init__(self, DATA_DIR):
+    def __init__(self, ROOT_DIR, DATA_DIR):
+        self.ROOT_DIR = ROOT_DIR
         self.DATA_DIR = DATA_DIR
 
     def do_import(self):
@@ -37,30 +38,32 @@ class BikeshareImport(object):
 
         # create directories in HDFS
         subprocess.call(
-            '/vagrant/hadoop/hadoop-hdfs.sh '
-            'dfs -mkdir hdfs://hadoop:9000/station_data',
+            '%s/hadoop/hadoop-hdfs.sh '
+            'dfs -mkdir hdfs://hadoop:9000/station_data' % self.ROOT_DIR,
             shell=True)
         subprocess.call(
-            '/vagrant/hadoop/hadoop-hdfs.sh '
-            'dfs -mkdir hdfs://hadoop:9000/status_data',
+            '%s/hadoop/hadoop-hdfs.sh '
+            'dfs -mkdir hdfs://hadoop:9000/status_data' % self.ROOT_DIR,
             shell=True)
 
         # copy processed station and status data to directories in HDFS
         subprocess.call(
-            '/vagrant/hadoop/hadoop-hdfs.sh '
-            'dfs -put %s/bikeshare_raw/station_data.csv hdfs://hadoop:9000/station_data' % self.DATA_DIR,
+            '%s/hadoop/hadoop-hdfs.sh '
+            'dfs -put /root/data/bikeshare_raw/station_data.csv '
+            'hdfs://hadoop:9000/station_data' % self.ROOT_DIR,
             shell=True)
         subprocess.call(
-            '/vagrant/hadoop/hadoop-hdfs.sh '
-            'dfs -put %s/bikeshare_raw/status_data.csv hdfs://hadoop:9000/status_data' % self.DATA_DIR,
+            '%s/hadoop/hadoop-hdfs.sh '
+            'dfs -put /root/data/bikeshare_raw/status_data.csv '
+            'hdfs://hadoop:9000/status_data' % self.ROOT_DIR,
             shell=True)
 
         print "Running transform in Spark..."
 
         # Run transform in Spark
         subprocess.call(
-            '/vagrant/spark/run-pyspark-cmd.sh '
-            '/vagrant/etl/spark-bikeshare-transform.py',
+            '%s/spark/run-pyspark-cmd.sh '
+            '/root/etl/bikeshare/spark-bikeshare-transform.py' % self.ROOT_DIR,
             shell=True
         )
 

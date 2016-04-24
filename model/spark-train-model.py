@@ -8,7 +8,7 @@ from pyspark import SparkContext
 from pyspark.sql import SQLContext
 from pyspark.sql.types import *
 from pyspark.sql import functions as F
-from pyspark.mllib.classification import LogisticRegressionWithSGD
+from pyspark.mllib.classification import SVMWithSGD
 from pyspark.mllib.regression import LinearRegressionWithSGD
 from pyspark.mllib.regression import LabeledPoint
 
@@ -92,7 +92,7 @@ status_normalized_df = (status_joined_df
 
 status_normalized_df.show()
 
-status_normalized_df.toPandas().to_csv("/vagrant/status_joined.csv")
+status_normalized_df.toPandas().to_csv("/root/data/model_status_joined.csv")
 
 positive_instances = status_normalized_df.filter(status_normalized_df.bikesAvailable == 0)
 negative_instances = status_normalized_df.filter(status_normalized_df.bikesAvailable > 0)
@@ -130,7 +130,7 @@ labelsAndPreds = points.map(lambda p: (p.label, model.predict(p.features)))
 trainErr = labelsAndPreds.filter(lambda (v, p): v != p).count() / float(points.count())
 print "Training error: %s" % trainErr
 
-# model.save(sc, "hdfs://hadoop:9000/noBikesAvailable.model")
+model.save(sc, "hdfs://hadoop:9000/models/noBikesAvailable.model")
 
 points = (status_normalized_df
     .map(
@@ -152,10 +152,11 @@ points = (status_normalized_df
 print points.collect()[:20]
 
 # Model 2: Linear regression model for detecting number of bikes available
-model = LinearRegressionWithSGD.train(points, step=1.0, iterations=1, intercept=True)
+model = SVMWithSGD.train(points, step=1.0, iterations=1, intercept=True)
 
 valuesAndPreds = points.map(lambda p: (float(p.label), float(model.predict(p.features))))
-sqlContext.createDataFrame(valuesAndPreds).toPandas().to_csv("/vagrant/model_predictions.csv")
+sqlContext.createDataFrame(valuesAndPreds).toPandas().to_csv(
+    "/root/data/model_predictions.csv")
 
 print valuesAndPreds.collect()[:20]
 MSE = (valuesAndPreds
@@ -163,4 +164,4 @@ MSE = (valuesAndPreds
     .reduce(lambda x, y: x + y) / float(valuesAndPreds.count()))
 print "Training error: %s" % MSE
 
-#model.save(sc, "hdfs://hadoop:9000/noBikesAvailable.model")
+model.save(sc, "hdfs://hadoop:9000/models/noBikesAvailable.model")

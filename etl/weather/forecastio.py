@@ -9,7 +9,7 @@ import urlfetch
 class ForecastIOImport(object):
     """API to interface with forecast.io and get data into HDFS."""
 
-    def __init__(self, secrets, data_dir):
+    def __init__(self, secrets, root_dir, data_dir):
         self.token = secrets.ForecastIOToken
 
         self.locations = [
@@ -20,6 +20,7 @@ class ForecastIOImport(object):
             ['San_Jose', 37.33641, -121.8916]
         ]
 
+        self.root_dir = root_dir
         self.data_dir = data_dir
 
     def do_import(self, start_date, end_date, max_requests):
@@ -96,11 +97,7 @@ class ForecastIOImport(object):
 
         print "Converting weather data to CSV..."
 
-        subprocess.call(
-            "rm -rf /vagrant/tmp && mkdir /vagrant/tmp",
-            shell=True)
-
-        with open("/vagrant/tmp/weather.csv", "w") as out:
+        with open("/tmp/weather.csv", "w") as out:
             for root, dir, files in os.walk(self.data_dir):
                 for file in files:
                     if file.startswith("weather_"):
@@ -145,24 +142,22 @@ class ForecastIOImport(object):
 
         # Copy the CSV into HDFS
         subprocess.call(
-            "/vagrant/hadoop/hadoop-hdfs.sh "
-            "dfs -rm hdfs://hadoop:9000/weather.csv",
+            "%s/hadoop/hadoop-hdfs.sh "
+            "dfs -rm hdfs://hadoop:9000/weather.csv" % self.root_dir,
             shell=True
         )
         subprocess.call(
-            "/vagrant/hadoop/hadoop-hdfs.sh "
-            "dfs -put /vagrant/tmp/weather.csv hdfs://hadoop:9000/",
+            "%s/hadoop/hadoop-hdfs.sh "
+            "dfs -put /tmp/weather.csv hdfs://hadoop:9000/" % self.root_dir,
             shell=True
         )
-
-        subprocess.call("rm -rf /vagrant/tmp", shell=True)
 
         print "Running transform in Spark... (This can take a looong time.)"
 
         # Run transform in Spark
         subprocess.call(
-            '/vagrant/spark/run-pyspark-cmd.sh '
-            '/vagrant/etl/spark-weather-transform.py',
+            '%s/spark/run-pyspark-cmd.sh '
+            '/root/etl/weather/spark-weather-transform.py' % self.root_dir,
             shell=True
         )
 
