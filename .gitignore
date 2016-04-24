@@ -1,3 +1,4 @@
 data/
 secrets.py
 .vagrant/
+*.pyc

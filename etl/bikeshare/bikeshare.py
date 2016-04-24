@@ -1,8 +1,8 @@
 import subprocess
 
 # Sources for bikeshare data
-# year_1_data = 'https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip'
-# year_2_data =  'https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip'
+year_1_data = 'https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip'
+year_2_data =  'https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip'
 
 class BikeshareImport(object):
 
@@ -18,9 +18,23 @@ class BikeshareImport(object):
         /status_data_schema directories in Parquet format.
         """
 
-        # print "Downloading and unzipping bikeshare data..." # TODO: not functional currently - all individual csv files must already be in /data/bikeshare_raw before script execution
-        # subprocess.call('wget %s -O temp.zip; unzip temp.zip -d %s/bikeshare_raw; rm temp.zip' % (year_1_data, self.DATA_DIR))
-        # subprocess.call('wget %s -O temp.zip; unzip temp.zip -d %s/bikeshare_raw; rm temp.zip' % (year_2_data, self.DATA_DIR))
+        print "Downloading and unzipping bikeshare data..."
+        subprocess.call(
+            "wget %s -O temp.zip && "
+            "unzip -o -u temp.zip -d %s/bikeshare_raw && "
+            "mv %s/bikeshare_raw/201402_babs_open_data/* %s/bikeshare_raw && "
+            "mv %s/bikeshare_raw/201408_babs_open_data/* %s/bikeshare_raw && "
+            "rmdir %s/bikeshare_raw/201402_babs_open_data && "
+            "rmdir %s/bikeshare_raw/201408_babs_open_data && "
+            "rm temp.zip" % (year_1_data, self.DATA_DIR, self.DATA_DIR, self.DATA_DIR,
+                self.DATA_DIR, self.DATA_DIR, self.DATA_DIR, self.DATA_DIR),
+            shell=True)
+
+        subprocess.call(
+            "wget %s -O temp.zip && "
+            "unzip -o -u temp.zip -d %s/bikeshare_raw && "
+            "rm temp.zip" % (year_2_data, self.DATA_DIR),
+            shell=True)
 
         print "Processing bikeshare data and copying into HDFS..."
 

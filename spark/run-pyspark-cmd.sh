@@ -10,4 +10,4 @@ docker run -it --rm \
   -v /tmp:/tmp \
   --name spark-cmd \
   mids-w205/spark \
-  $1
+  "$@"

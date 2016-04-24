@@ -9,7 +9,6 @@ from pyspark.sql import SQLContext
 from pyspark.sql.types import *
 from pyspark.sql import functions as F
 from pyspark.mllib.classification import SVMWithSGD
-from pyspark.mllib.regression import LinearRegressionWithSGD
 from pyspark.mllib.regression import LabeledPoint
 
 sc = SparkContext("local", "Model Generation ETL", pyFiles=[])
@@ -39,6 +38,7 @@ status_joined_df = (status_stations_df
         (status_stations_df.time == weather_df.time) &
         (status_stations_df.city == weather_df.city))
     .select(
+        status_stations_df.id,
         status_stations_df.bikesAvailable,
         status_stations_df.docksAvailable,
         weather_df.date,
@@ -53,19 +53,22 @@ status_joined_df = (status_stations_df
 
 status_joined_df.show()
 
-stats = (status_joined_df
+stats_df = (status_joined_df
     .agg(
-        F.mean(status_joined_df.temperature),
-        F.mean(status_joined_df.humidity),
-        F.mean(status_joined_df.pressure),
+        F.mean(status_joined_df.temperature).alias("avgTemp"),
+        F.mean(status_joined_df.humidity).alias("avgHumidity"),
+        F.mean(status_joined_df.pressure).alias("avgPressure"),
 
-        F.stddev(status_joined_df.temperature),
-        F.stddev(status_joined_df.humidity),
-        F.stddev(status_joined_df.pressure),
-        F.stddev(status_joined_df.visibility),
-        F.stddev(status_joined_df.precipIntensity),
-        F.stddev(status_joined_df.windSpeed))
-    .collect()[0])
+        F.stddev(status_joined_df.temperature).alias("stddevTemp"),
+        F.stddev(status_joined_df.humidity).alias("stddevHumidity"),
+        F.stddev(status_joined_df.pressure).alias("stddevPressure"),
+        F.stddev(status_joined_df.visibility).alias("stddevVisibility"),
+        F.stddev(status_joined_df.precipIntensity).alias("stddevPrecipitation"),
+        F.stddev(status_joined_df.windSpeed).alias("stddevWindSpeed")))
+
+stats_df.write.mode('overwrite').parquet("hdfs://hadoop:9000/models/weather-stats")
+
+stats = stats_df.collect()[0]
 
 print "Statistics: %s" % (stats,)
 
@@ -75,17 +78,17 @@ day_of_week = F.udf(
 
 status_normalized_df = (status_joined_df
     .withColumn(
-        "zTemperature", F.abs(status_joined_df.temperature - stats[0]) / stats[3])
+        "zTemperature", F.abs(status_joined_df.temperature - stats.avgTemp) / stats.stddevTemp)
     .withColumn(
-        "zHumidity", F.abs(status_joined_df.humidity - stats[1]) / stats[4])
+        "zHumidity", F.abs(status_joined_df.humidity - stats.avgHumidity) / stats.stddevHumidity)
     .withColumn(
-        "zPressure", F.abs(status_joined_df.pressure - stats[2]) / stats[5])
+        "zPressure", F.abs(status_joined_df.pressure - stats.avgPressure) / stats.stddevPressure)
     .withColumn(
-        "zVisibility", F.abs(10 - status_joined_df.visibility) / stats[6])
+        "zVisibility", F.abs(10 - status_joined_df.visibility) / stats.stddevVisibility)
     .withColumn(
-        "zPrecipitation", F.abs(status_joined_df.precipIntensity) / stats[7])
+        "zPrecipitation", F.abs(status_joined_df.precipIntensity) / stats.stddevPrecipitation)
     .withColumn(
-        "zWindSpeed", F.abs(status_joined_df.windSpeed) / stats[8])
+        "zWindSpeed", F.abs(status_joined_df.windSpeed) / stats.stddevWindSpeed)
     .withColumn(
         "dayOfWeek", day_of_week(status_joined_df.date))
     )
@@ -105,63 +108,23 @@ negative_sample = negative_instances.sample(False, sample_ratio)
 print "Negative count: %s" % negative_sample.count()
 
 points = positive_instances.unionAll(negative_sample).map(
-    lambda r: LabeledPoint(r.bikesAvailable == 0, [
-        r.zTemperature,
-        r.zHumidity,
-        r.zVisibility,
-        r.zPressure,
-        r.zPrecipitation,
-        r.zWindSpeed,
-        r.dayOfWeek == 0,
-        r.dayOfWeek == 1,
-        r.dayOfWeek == 2,
-        r.dayOfWeek == 3,
-        r.dayOfWeek == 4,
-        r.dayOfWeek == 5,
-        r.dayOfWeek == 6,
-    ]))
-
-print "Total training points: %s" % points.count()
-
-# Model 1: Logistic regression model for detecting when no bikes are available
-model = LogisticRegressionWithSGD.train(points, intercept=True)
-
-labelsAndPreds = points.map(lambda p: (p.label, model.predict(p.features)))
-trainErr = labelsAndPreds.filter(lambda (v, p): v != p).count() / float(points.count())
-print "Training error: %s" % trainErr
-
-model.save(sc, "hdfs://hadoop:9000/models/noBikesAvailable.model")
-
-points = (status_normalized_df
-    .map(
-        lambda r: LabeledPoint(r.bikesAvailable, [
+    lambda r: LabeledPoint(r.bikesAvailable == 0,
+        [r.id == idx for idx in xrange(100)] + [
             r.zTemperature,
             r.zHumidity,
             r.zVisibility,
             r.zPressure,
             r.zPrecipitation,
-            r.zWindSpeed,
-            r.dayOfWeek == 0,
-            r.dayOfWeek == 1,
-            r.dayOfWeek == 2,
-            r.dayOfWeek == 3,
-            r.dayOfWeek == 4,
-            r.dayOfWeek == 5,
-            r.dayOfWeek == 6,
-        ])))
-print points.collect()[:20]
+            r.zWindSpeed
+        ] + [r.dayOfWeek == idx for idx in xrange(7)]))
 
-# Model 2: Linear regression model for detecting number of bikes available
-model = SVMWithSGD.train(points, step=1.0, iterations=1, intercept=True)
+print "Total training points: %s" % points.count()
 
-valuesAndPreds = points.map(lambda p: (float(p.label), float(model.predict(p.features))))
-sqlContext.createDataFrame(valuesAndPreds).toPandas().to_csv(
-    "/root/data/model_predictions.csv")
+# Model 1: Support vector machine regression model for detecting when no bikes are available
+model = SVMWithSGD.train(points, intercept=True)
 
-print valuesAndPreds.collect()[:20]
-MSE = (valuesAndPreds
-    .map(lambda (v, p): (v - p)**2)
-    .reduce(lambda x, y: x + y) / float(valuesAndPreds.count()))
-print "Training error: %s" % MSE
+labelsAndPreds = points.map(lambda p: (p.label, model.predict(p.features)))
+trainErr = labelsAndPreds.filter(lambda (v, p): v != p).count() / float(points.count())
+print "Training error: %s" % trainErr
 
 model.save(sc, "hdfs://hadoop:9000/models/noBikesAvailable.model")
