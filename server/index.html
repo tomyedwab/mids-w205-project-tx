@@ -5,6 +5,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.0.1/react-dom.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
     <script src="/app.js" type="text/babel"></script>
+    <style>
+body {
+    background-color: #f8f8f8;
+    margin: 0;
+}
+tr {
+    text-shadow: 2px 2px 2px rgb(204, 204, 204) ;
+}
+tr.station:nth-child(odd) {
+    background-color: #f8f8f8;
+}
+tr.station:nth-child(even) {
+    background-color: #eee;
+}
+.availableCell {
+    background: rgb(47,255,57); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(47,255,57,1) 0%, rgba(31,245,42,1) 44%, rgba(20,222,30,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(47,255,57,1) 0%,rgba(31,245,42,1) 44%,rgba(20,222,30,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(47,255,57,1) 0%,rgba(31,245,42,1) 44%,rgba(20,222,30,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2fff39', endColorstr='#14de1e',GradientType=0 ); /* IE6-9 */
+}
+tr.station:nth-child(even) .availableCell {
+    background: rgb(4,232,38); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(4,232,38,1) 0%, rgba(10,228,36,1) 44%, rgba(17,191,37,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(4,232,38,1) 0%,rgba(10,228,36,1) 44%,rgba(17,191,37,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(4,232,38,1) 0%,rgba(10,228,36,1) 44%,rgba(17,191,37,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#04e826', endColorstr='#11bf25',GradientType=0 ); /* IE6-9 */
+}
+.unavailableCell {
+    background: rgb(255,61,47); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(255,61,47,1) 0%, rgba(245,45,31,1) 44%, rgba(222,33,20,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(255,61,47,1) 0%,rgba(245,45,31,1) 44%,rgba(222,33,20,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(255,61,47,1) 0%,rgba(245,45,31,1) 44%,rgba(222,33,20,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff3d2f', endColorstr='#de2114',GradientType=0 ); /* IE6-9 */
+}
+tr.station:nth-child(even) .unavailableCell {
+    background: rgb(226,15,0); /* Old browsers */
+    background: -moz-linear-gradient(top, rgba(226,15,0,1) 0%, rgba(197,21,9,1) 44%, rgba(167,25,15,1) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(226,15,0,1) 0%,rgba(197,21,9,1) 44%,rgba(167,25,15,1) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(226,15,0,1) 0%,rgba(197,21,9,1) 44%,rgba(167,25,15,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e20f00', endColorstr='#a7190f',GradientType=0 ); /* IE6-9 */
+}
+    </style>
   </head>
   <body>
     <div id="content"></div>

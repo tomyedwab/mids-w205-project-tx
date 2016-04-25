@@ -1,6 +1,3 @@
-const clrAvailable = {backgroundColor: "#00cd65"};
-const clrUnavailable = {backgroundColor: "#c62a07"};
-
 function parsePredictions(predictions) {
     var cities = {};
     var stations = {};
@@ -93,9 +90,9 @@ var App = React.createClass({
 
         const windRow = range.map((dateTime) => {
             const val = cityData[dateTime][station].windSpeed;
-            return <td>{val.toFixed()} mph</td>;
+            return <td style={{verticalAlign: "top"}}>{val.toFixed()} mph</td>;
         });
-        windRow.splice(0, 0, <td>Wind speed</td>);
+        windRow.splice(0, 0, <td style={{paddingBottom: "20px"}}>Wind speed</td>);
 
         const pressureRow = range.map((dateTime) => {
             const val = cityData[dateTime][station].pressure;
@@ -103,22 +100,22 @@ var App = React.createClass({
         });
         pressureRow.splice(0, 0, <td>Barometer</td>);
 
-        const stationRows = stationNames.map((station) => <tr>
+        const stationRows = stationNames.map((station) => <tr className="station">
             <td>{station}</td>
             {range.map((dateTime) => (
-                <td style={cityData[dateTime][station].prediction === "0" ?
-                    clrAvailable : clrUnavailable} />))}
+                <td className={cityData[dateTime][station].prediction === "0" ?
+                    "availableCell" : "unavailableCell"} />))}
         </tr>);
 
-        return <table width="100%"><tbody>
-            <tr>{dateRow}</tr>
-            <tr>{timeRow}</tr>
-            <tr>{tempRow}</tr>
-            <tr>{humidRow}</tr>
-            <tr>{precipRow}</tr>
-            <tr>{pressureRow}</tr>
-            <tr>{visRow}</tr>
-            <tr>{windRow}</tr>
+        return <table width="100%" style={{padding: "16px"}}><tbody>
+            <tr style={{fontWeight: "bold"}}>{dateRow}</tr>
+            <tr style={{fontWeight: "bold"}}>{timeRow}</tr>
+            <tr style={{color:"#a93f02"}}>{tempRow}</tr>
+            <tr style={{color:"#66a61e"}}>{humidRow}</tr>
+            <tr style={{color:"#7570b3"}}>{precipRow}</tr>
+            <tr style={{color:"#666666"}}>{pressureRow}</tr>
+            <tr style={{color:"#1b9e77"}}>{visRow}</tr>
+            <tr style={{color:"#a6761d"}}>{windRow}</tr>
             {stationRows}
         </tbody></table>;
     },
@@ -127,7 +124,14 @@ var App = React.createClass({
         const cityData = this.props.cities[cityName];
         const dateRange = this.props.allDateTimes.slice(0, 12);
         return <div>
-            <h2>{cityName.replace("_", " ")}</h2>
+            <img
+                src={"/images/" + cityName + ".jpg"}
+                style={{ position: "absolute", zIndex: -10 }}
+                width="100%"
+            />
+            <h2 style={{padding: "16px", margin: 0}}>
+                {cityName.replace("_", " ")}
+            </h2>
             {this.renderTable(cityData, this.props.stations[cityName], dateRange)}
         </div>;
     },
@@ -135,14 +139,14 @@ var App = React.createClass({
     render: function() {
         const cityNames = Object.keys(this.props.cities);
         return <div>
-            <h1>Project TX</h1>
+            <h1 style={{textAlign: "center"}}>Project TX</h1>
             {cityNames.map(this.renderCity)}
         </div>;
     }
 });
 
 ReactDOM.render(
-    <h1>Loading...</h1>,
+    <h1 style={{textAlign: "center"}}>Loading...</h1>,
     document.getElementById('content')
 );
 
