@@ -47,12 +47,12 @@ class ForecastModel(object):
             for line in f:
                 rows.append(eval(line))
 
-        # Save to a big JSON blob
+        # Save the data in JSONP format (with hard-coded callback)
         try:
             os.mkdir("%s/server/data" % self.root_dir)
         except OSError:
             pass
 
         json_blob = json.dumps([row.values for row in rows])
-        with open("%s/server/data/latest_predictions.json" % self.root_dir, "w") as f:
-            f.write(json_blob)
+        with open("%s/server/data/latest_predictions.jsonp" % self.root_dir, "w") as f:
+            f.write("parsePredictions(" + json_blob + ");")
