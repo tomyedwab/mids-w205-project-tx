@@ -1,3 +1,6 @@
+const clrAvailable = {backgroundColor: "#00cd65"};
+const clrUnavailable = {backgroundColor: "#c62a07"};
+
 function parsePredictions(predictions) {
     var cities = {};
     var stations = {};
@@ -52,9 +55,9 @@ var App = React.createClass({
             const dateStr = this.props.dateTimes[dateTime].toLocaleFormat("%m/%d");
             if (dateStr !== currentDate) {
                 currentDate = dateStr;
-                return <td>{dateStr}</td>;
+                return <td width="6.9%">{dateStr}</td>;
             }
-            return <td />;
+            return <td width="6.9%" />;
         });
         dateRow.splice(0, 0, <td />);
 
@@ -103,10 +106,11 @@ var App = React.createClass({
         const stationRows = stationNames.map((station) => <tr>
             <td>{station}</td>
             {range.map((dateTime) => (
-                <td>{cityData[dateTime][station].prediction}</td>))}
+                <td style={cityData[dateTime][station].prediction === "0" ?
+                    clrAvailable : clrUnavailable} />))}
         </tr>);
 
-        return <table><tbody>
+        return <table width="100%"><tbody>
             <tr>{dateRow}</tr>
             <tr>{timeRow}</tr>
             <tr>{tempRow}</tr>
