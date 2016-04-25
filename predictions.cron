@@ -1,0 +1,1 @@
+0 * * * * /usr/bin/python $HOME/project/run_prediction.py > $HOME/project/logs/prediction.log
